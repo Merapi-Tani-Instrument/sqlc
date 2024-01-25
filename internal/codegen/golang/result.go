@@ -238,6 +238,7 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 				Typ:       goType(req, options, p.Column),
 				SQLDriver: sqlpkg,
 				Column:    p.Column,
+				Batch:     strings.Contains(metadata.CmdInsertBatch, query.Cmd),
 			}
 		} else if len(query.Params) >= 1 {
 			var cols []goColumn

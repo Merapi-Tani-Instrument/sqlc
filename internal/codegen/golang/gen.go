@@ -39,6 +39,7 @@ type tmplCtx struct {
 	EmitAllEnumValues         bool
 	UsesCopyFrom              bool
 	UsesBatch                 bool
+	UsesUtils                 bool
 	OmitSqlcVersion           bool
 	BuildTags                 string
 }
@@ -99,6 +100,8 @@ func (t *tmplCtx) codegenQueryRetval(q Query) (string, error) {
 		return "result, err :=", nil
 	case ":execresult":
 		return "return", nil
+	case metadata.CmdInsertBatch:
+		return "_, err =", nil
 	default:
 		return "", fmt.Errorf("unhandled q.Cmd case %q", q.Cmd)
 	}
@@ -179,6 +182,7 @@ func generate(req *plugin.GenerateRequest, options *opts.Options, enums []Enum, 
 		EmitAllEnumValues:         options.EmitAllEnumValues,
 		UsesCopyFrom:              usesCopyFrom(queries),
 		UsesBatch:                 usesBatch(queries),
+		UsesUtils:                 usesUtils(queries),
 		SQLDriver:                 parseDriver(options.SqlPackage),
 		Q:                         "`",
 		Package:                   options.Package,
@@ -242,6 +246,7 @@ func generate(req *plugin.GenerateRequest, options *opts.Options, enums []Enum, 
 		err := tmpl.ExecuteTemplate(w, templateName, &tctx)
 		w.Flush()
 		if err != nil {
+			fmt.Println("Error disini")
 			return err
 		}
 		code, err := format.Source(b.Bytes())
@@ -304,6 +309,11 @@ func generate(req *plugin.GenerateRequest, options *opts.Options, enums []Enum, 
 			return nil, err
 		}
 	}
+	if tctx.UsesUtils {
+		if err := execute("utils.go", "utilsFile"); err != nil {
+			return nil, err
+		}
+	}
 
 	files := map[string]struct{}{}
 	for _, gq := range queries {
@@ -330,6 +340,15 @@ func generate(req *plugin.GenerateRequest, options *opts.Options, enums []Enum, 
 func usesCopyFrom(queries []Query) bool {
 	for _, q := range queries {
 		if q.Cmd == metadata.CmdCopyFrom {
+			return true
+		}
+	}
+	return false
+}
+
+func usesUtils(queries []Query) bool {
+	for _, q := range queries {
+		if q.Cmd == metadata.CmdInsertBatch {
 			return true
 		}
 	}

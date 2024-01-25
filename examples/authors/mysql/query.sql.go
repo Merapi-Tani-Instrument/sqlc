@@ -10,6 +10,20 @@ import (
 	"database/sql"
 )
 
+const cobaInsert = `-- name: CobaInsert :insertBatch
+INSERT INTO authors (id)
+VALUES (?)
+`
+
+func (q *Queries) CobaInsert(ctx context.Context, id []int64) error {
+	qy, err := appendQuery(cobaInsert, len(id))
+	if err != nil {
+		return err
+	}
+	_, err = q.db.ExecContext(ctx, qy, id)
+	return err
+}
+
 const createAuthor = `-- name: CreateAuthor :execresult
 INSERT INTO authors (
   name, bio

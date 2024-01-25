@@ -32,6 +32,19 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
 }
 {{end}}
 
+{{if eq .Cmd ":insertBatch"}}
+{{range .Comments}}//{{.}}
+{{end -}}
+func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}) error {
+    qy,err := appendQuery({{.ConstantName}}, len({{.Arg.Name}}))
+    if err != nil{
+        return err
+    }
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, {{.Arg.Name}})
+    return err
+}
+{{end}}
+
 {{if eq .Cmd ":many"}}
 {{range .Comments}}//{{.}}
 {{end -}}

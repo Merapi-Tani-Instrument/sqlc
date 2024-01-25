@@ -22,16 +22,18 @@ type Metadata struct {
 }
 
 const (
-	CmdExec       = ":exec"
-	CmdExecResult = ":execresult"
-	CmdExecRows   = ":execrows"
-	CmdExecLastId = ":execlastid"
-	CmdMany       = ":many"
-	CmdOne        = ":one"
-	CmdCopyFrom   = ":copyfrom"
-	CmdBatchExec  = ":batchexec"
-	CmdBatchMany  = ":batchmany"
-	CmdBatchOne   = ":batchone"
+	CmdExec        = ":exec"
+	CmdExecResult  = ":execresult"
+	CmdExecRows    = ":execrows"
+	CmdExecLastId  = ":execlastid"
+	CmdMany        = ":many"
+	CmdOne         = ":one"
+	CmdCopyFrom    = ":copyfrom"
+	CmdBatchExec   = ":batchexec"
+	CmdBatchMany   = ":batchmany"
+	CmdBatchOne    = ":batchone"
+	CmdInsertBatch = ":insertBatch"
+	CmdUpdateBatch = ":updateBatch"
 )
 
 // A query name must be a valid Go identifier
@@ -101,7 +103,7 @@ func ParseQueryNameAndType(t string, commentStyle CommentSyntax) (string, string
 		queryName := part[2]
 		queryType := strings.TrimSpace(part[3])
 		switch queryType {
-		case CmdOne, CmdMany, CmdExec, CmdExecResult, CmdExecRows, CmdExecLastId, CmdCopyFrom, CmdBatchExec, CmdBatchMany, CmdBatchOne:
+		case CmdOne, CmdMany, CmdExec, CmdExecResult, CmdExecRows, CmdExecLastId, CmdCopyFrom, CmdBatchExec, CmdBatchMany, CmdBatchOne, CmdInsertBatch, CmdUpdateBatch:
 		default:
 			return "", "", fmt.Errorf("invalid query type: %s", queryType)
 		}

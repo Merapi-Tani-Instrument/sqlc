@@ -16,6 +16,7 @@ type QueryValue struct {
 	Struct      *Struct
 	Typ         string
 	SQLDriver   SQLDriver
+	Batch       bool
 
 	// Column is kept so late in the generation process around to differentiate
 	// between mysql slices and pg arrays
@@ -46,7 +47,11 @@ type Argument struct {
 func (v QueryValue) Pair() string {
 	var out []string
 	for _, arg := range v.Pairs() {
-		out = append(out, arg.Name+" "+arg.Type)
+		if v.Batch {
+			out = append(out, arg.Name+" []"+arg.Type)
+		} else {
+			out = append(out, arg.Name+" "+arg.Type)
+		}
 	}
 	return strings.Join(out, ",")
 }
