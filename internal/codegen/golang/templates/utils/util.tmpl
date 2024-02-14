@@ -1,0 +1,51 @@
+{{define "utilsCode"}}
+
+var InvalidType = errors.New("Invalid type")
+
+func appendQuery(q string, l int) (string, error){
+    if l <= 1 {
+		return q, nil
+	}
+	regex, err := regexp.Compile(`\(([\s\?\,]*?)\)`)
+	if err != nil {
+		return "", err
+	}
+	res := regex.FindAllString(q, 1)[0]
+	var join []string
+	for i := 1; i < l; i++ {
+		join = append(join, res)
+	}
+	return q + "," + strings.Join(join, ","), nil
+}
+
+func batchDelete(q string, d any) (string, error) {
+	pType := reflect.TypeOf(d).Kind()
+	if pType != reflect.Slice && pType != reflect.Array && pType != reflect.Ptr {
+		return "", InvalidType
+	}
+
+	groupQuery := regexp.MustCompile(`(\w+\s*(?:in|=)\s*[\(]?\?*[\)]?),*`).FindAllStringSubmatch(q, -1)
+	sqlGroup := regexp.MustCompile(`\(.*\)`)
+	if pType == reflect.Array || pType == reflect.Slice {
+		group := createGroupSql(reflect.ValueOf(d).Len())
+		newSql := sqlGroup.ReplaceAllString(groupQuery[0][1], group)
+		q = strings.ReplaceAll(q, groupQuery[0][1], newSql)
+	} else {
+		elem := reflect.ValueOf(d).Elem()
+		for i := 0; i < elem.NumField(); i++ {
+			f := elem.Field(i)
+			if f.Kind() == reflect.Array || f.Kind() == reflect.Slice {
+				group := createGroupSql(f.Len())
+				newSql := sqlGroup.ReplaceAllString(groupQuery[i][1], group)
+				q = strings.ReplaceAll(q, groupQuery[i][1], newSql)
+			}
+		}
+	}
+	return q, nil
+}
+
+func createGroupSql(l int) string {
+	return "(" + strings.Join(strings.Split(strings.Repeat("?", l), ""), ",") + ")"
+}
+
+{{end}}
