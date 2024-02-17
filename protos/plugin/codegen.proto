@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package plugin;
+option go_package = "./plugin";
 
 service CodegenService {
   rpc Generate (GenerateRequest) returns (GenerateResponse);
@@ -100,6 +101,8 @@ message Column {
   string original_name = 15;
   bool unsigned = 16;
   int32 array_dims = 17;
+
+  bool is_primary_column = 18;
 }
 
 message Query {

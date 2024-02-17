@@ -40,6 +40,7 @@ type Column struct {
 	IsSqlcSlice bool // is this sqlc.slice()
 
 	skipTableRequiredCheck bool
+	IsPrimaryColumn        bool
 }
 
 type Query struct {

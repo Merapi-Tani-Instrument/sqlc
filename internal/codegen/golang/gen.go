@@ -100,7 +100,7 @@ func (t *tmplCtx) codegenQueryRetval(q Query) (string, error) {
 		return "result, err :=", nil
 	case ":execresult":
 		return "return", nil
-	case metadata.CmdInsertBatch, metadata.CmdDeleteBatch:
+	case metadata.CmdInsertBatch, metadata.CmdDeleteBatch, metadata.CmdUpdateBatch:
 		return "_, err =", nil
 	default:
 		return "", fmt.Errorf("unhandled q.Cmd case %q", q.Cmd)
@@ -116,7 +116,6 @@ func Generate(ctx context.Context, req *plugin.GenerateRequest) (*plugin.Generat
 	if err := opts.ValidateOpts(options); err != nil {
 		return nil, err
 	}
-
 	enums := buildEnums(req, options)
 	structs := buildStructs(req, options)
 	queries, err := buildQueries(req, options, structs)

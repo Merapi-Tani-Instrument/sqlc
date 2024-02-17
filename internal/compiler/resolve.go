@@ -633,5 +633,27 @@ func (comp *Compiler) resolveCatalogRefs(qc *QueryCatalog, rvs []*ast.RangeVar, 
 			addUnknownParam(ref)
 		}
 	}
+
+	for i, d := range a {
+		var tableName *ast.TableName
+
+		if len(tables) == 1 {
+			tableName = tables[0]
+		} else {
+			continue
+		}
+
+		var schema string
+		if tableName.Schema == "" {
+			schema = c.DefaultSchema
+		} else {
+			schema = tableName.Schema
+		}
+
+		if h, ok := typeMap[schema][tableName.Name][d.Column.Name]; ok {
+			a[i].Column.IsPrimaryColumn = h.PrimaryKey
+		}
+	}
+
 	return a, nil
 }

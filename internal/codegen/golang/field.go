@@ -19,6 +19,7 @@ type Field struct {
 	Column  *plugin.Column
 	// EmbedFields contains the embedded fields that require scanning.
 	EmbedFields []Field
+	PrimaryKey  bool
 }
 
 func (gf Field) Tag() string {

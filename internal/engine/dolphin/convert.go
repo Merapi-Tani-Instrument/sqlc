@@ -2,6 +2,7 @@ package dolphin
 
 import (
 	"log"
+	"regexp"
 	"strings"
 
 	pcast "github.com/pingcap/tidb/pkg/parser/ast"
@@ -210,6 +211,12 @@ func (c *cc) convertBinaryOperationExpr(n *pcast.BinaryOperationExpr) ast.Node {
 	}
 }
 
+func (c *cc) primaryKeyHasDefined(t string, colName string) bool {
+	reg := regexp.MustCompile(strings.Replace("[COLNAME](?:`).+(?:PRIMARY KEY|primary key)", "[COLNAME]", colName, -1))
+	reg2 := regexp.MustCompile(strings.Replace("(?:PRIMARY KEY|primary key).+(?:`)[COLNAME]", "[COLNAME]", colName, -1))
+	return reg.FindString(t) != "" || reg2.FindString(t) != ""
+}
+
 func (c *cc) convertCreateTableStmt(n *pcast.CreateTableStmt) ast.Node {
 	create := &ast.CreateTableStmt{
 		Name:        parseTableName(n.Table),
@@ -219,7 +226,9 @@ func (c *cc) convertCreateTableStmt(n *pcast.CreateTableStmt) ast.Node {
 		create.ReferTable = parseTableName(n.ReferTable)
 	}
 	for _, def := range n.Cols {
-		create.Cols = append(create.Cols, convertColumnDef(def))
+		col := convertColumnDef(def)
+		col.PrimaryKey = c.primaryKeyHasDefined(n.Text(), def.Name.Name.String())
+		create.Cols = append(create.Cols, col)
 	}
 	for _, opt := range n.Options {
 		switch opt.Tp {
@@ -256,6 +265,7 @@ func convertColumnDef(def *pcast.ColumnDef) *ast.ColumnDef {
 		IsUnsigned: isUnsigned(def),
 		Comment:    comment,
 		Vals:       vals,
+		PrimaryKey: mysql.HasPriKeyFlag(def.Tp.GetFlag()),
 	}
 	if def.Tp.GetFlen() >= 0 {
 		length := def.Tp.GetFlen()

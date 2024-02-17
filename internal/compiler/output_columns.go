@@ -33,6 +33,7 @@ func (c *Compiler) OutputColumns(stmt ast.Node) ([]*catalog.Column, error) {
 			ArrayDims:  col.ArrayDims,
 			Comment:    col.Comment,
 			Length:     col.Length,
+			PrimaryKey: col.IsPrimaryColumn,
 		})
 	}
 	return catCols, nil
@@ -278,18 +279,19 @@ func (c *Compiler) outputColumns(qc *QueryCatalog, node ast.Node) ([]*Column, er
 							cname = *res.Name
 						}
 						cols = append(cols, &Column{
-							Name:         cname,
-							OriginalName: c.Name,
-							Type:         c.Type,
-							Scope:        scope,
-							Table:        c.Table,
-							TableAlias:   t.Rel.Name,
-							DataType:     c.DataType,
-							NotNull:      c.NotNull,
-							Unsigned:     c.Unsigned,
-							IsArray:      c.IsArray,
-							ArrayDims:    c.ArrayDims,
-							Length:       c.Length,
+							Name:            cname,
+							OriginalName:    c.Name,
+							Type:            c.Type,
+							Scope:           scope,
+							Table:           c.Table,
+							TableAlias:      t.Rel.Name,
+							DataType:        c.DataType,
+							NotNull:         c.NotNull,
+							Unsigned:        c.Unsigned,
+							IsArray:         c.IsArray,
+							ArrayDims:       c.ArrayDims,
+							Length:          c.Length,
+							IsPrimaryColumn: c.IsPrimaryColumn,
 						})
 					}
 				}
@@ -668,18 +670,19 @@ func outputColumnRefs(res *ast.ResTarget, tables []*Table, node *ast.ColumnRef) 
 					cname = *res.Name
 				}
 				cols = append(cols, &Column{
-					Name:         cname,
-					Type:         c.Type,
-					Table:        c.Table,
-					TableAlias:   alias,
-					DataType:     c.DataType,
-					NotNull:      c.NotNull,
-					Unsigned:     c.Unsigned,
-					IsArray:      c.IsArray,
-					ArrayDims:    c.ArrayDims,
-					Length:       c.Length,
-					EmbedTable:   c.EmbedTable,
-					OriginalName: c.Name,
+					Name:            cname,
+					Type:            c.Type,
+					Table:           c.Table,
+					TableAlias:      alias,
+					DataType:        c.DataType,
+					NotNull:         c.NotNull,
+					Unsigned:        c.Unsigned,
+					IsArray:         c.IsArray,
+					ArrayDims:       c.ArrayDims,
+					Length:          c.Length,
+					EmbedTable:      c.EmbedTable,
+					OriginalName:    c.Name,
+					IsPrimaryColumn: c.IsPrimaryColumn,
 				})
 			}
 		}

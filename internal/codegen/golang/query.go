@@ -130,6 +130,28 @@ func (v QueryValue) UniqueFields() []Field {
 	return fields
 }
 
+func (v QueryValue) PrimaryKey() string {
+	for _, field := range v.Struct.Fields {
+		if field.PrimaryKey {
+			return field.Column.OriginalName
+		}
+	}
+	return ""
+}
+
+func (v QueryValue) PrimaryKeyName() string {
+	for _, field := range v.Struct.Fields {
+		if field.PrimaryKey {
+			return field.Name
+		}
+	}
+	return ""
+}
+
+func (v QueryValue) LenField() int {
+	return len(v.Struct.Fields) - 1
+}
+
 func (v QueryValue) Params() string {
 	if v.isEmpty() {
 		return ""

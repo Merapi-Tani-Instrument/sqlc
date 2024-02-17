@@ -45,6 +45,15 @@ func createGroupSql(l int) string {
 	return "(" + strings.Join(strings.Split(strings.Repeat("?", l), ""), ",") + ")"
 }
 
+func batchUpdateQuery(query, colName string, numParam, numEfectedField int) string{
+	whenThen := "WHEN ? THEN ? "
+	o := fmt.Sprintf("(CASE %s %s END)", colName, strings.Repeat(whenThen, numParam))
+
+	ids := fmt.Sprintf("in (%s)", strings.Join(strings.Split(strings.Repeat("?", numParam), ""), ","))
+	jn := strings.Replace(query, "?", o, numEfectedField)
+	return regexp.MustCompile(`=\s+\?`).ReplaceAllString(jn, ids)
+}
+
 func composeParams(s any) ([]any, error) {
 	v := reflect.ValueOf(s)
 	if (v.Kind() == reflect.Array || v.Kind() == reflect.Slice) && v.Len() > 0 {

@@ -128,6 +128,7 @@ type Column struct {
 	ArrayDims  int
 	Comment    string
 	Length     *int
+	PrimaryKey bool
 
 	linkedType bool
 }
@@ -267,6 +268,7 @@ func (c *Catalog) createTable(stmt *ast.CreateTableStmt) error {
 	coltype := make(map[string]ast.TypeName) // used to check for duplicate column names
 	seen := make(map[string]bool)            // used to check for duplicate column names
 	for _, inheritTable := range stmt.Inherits {
+		fmt.Println("stmt.Inherits")
 		t, _, err := schema.getTable(inheritTable)
 		if err != nil {
 			return err
@@ -325,6 +327,7 @@ func (c *Catalog) createTable(stmt *ast.CreateTableStmt) error {
 	}
 
 	schema.Tables = append(schema.Tables, &tbl)
+
 	return nil
 }
 
@@ -338,6 +341,7 @@ func (c *Catalog) defineColumn(table *ast.TableName, col *ast.ColumnDef) (*Colum
 		ArrayDims:  col.ArrayDims,
 		Comment:    col.Comment,
 		Length:     col.Length,
+		PrimaryKey: col.PrimaryKey,
 	}
 	if col.Vals != nil {
 		typeName := ast.TypeName{

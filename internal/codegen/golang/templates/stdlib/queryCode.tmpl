@@ -44,7 +44,7 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
     if err != nil{
         return err
     }
-    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param)
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param...)
     return err
 }
 {{end}}
@@ -61,7 +61,38 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
     if err != nil{
         return err
     }
-    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param)
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param...)
+    return err
+}
+{{end}}
+
+{{if eq .Cmd ":updateBatch"}}
+{{range .Comments}}//{{.}}
+{{end -}}
+func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}) error {
+    numOfArgs := len({{.Arg.Name}})
+    newQuery := batchUpdateQuery({{.ConstantName}}, "{{.Arg.PrimaryKey}}", numOfArgs, {{.Arg.LenField}})
+    var params []any
+    for i := 0; i < {{.Arg.LenField}}; i++{
+        for j:=0; j< numOfArgs; j++{
+            params = append(params, {{.Arg.Name}}[j].{{.Arg.PrimaryKeyName}})
+            {{- $nn := .Arg.Name}}
+            switch i {
+                {{- range $index, $el := .Arg.UniqueFields }}
+                    {{- if $el.PrimaryKey }}
+                    {{- else }}
+                    case {{$index}}:
+                        params = append(params, {{$nn}}[j].{{$el.Name}})
+                    {{- end}}
+                {{- end}}
+            }
+        }
+    }
+    for j:=0; j< numOfArgs; j++{
+        params = append(params, {{.Arg.Name}}[j].{{.Arg.PrimaryKeyName}})
+    }
+    var err error
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, newQuery, params...)
     return err
 }
 {{end}}

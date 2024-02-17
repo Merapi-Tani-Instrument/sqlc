@@ -141,6 +141,7 @@ func pluginQueries(r *compiler.Result) []*plugin.Query {
 		for _, c := range q.Columns {
 			columns = append(columns, pluginQueryColumn(c))
 		}
+
 		for _, p := range q.Params {
 			params = append(params, pluginQueryParam(p))
 		}
@@ -172,17 +173,18 @@ func pluginQueryColumn(c *compiler.Column) *plugin.Column {
 		l = *c.Length
 	}
 	out := &plugin.Column{
-		Name:         c.Name,
-		OriginalName: c.OriginalName,
-		Comment:      c.Comment,
-		NotNull:      c.NotNull,
-		Unsigned:     c.Unsigned,
-		IsArray:      c.IsArray,
-		ArrayDims:    int32(c.ArrayDims),
-		Length:       int32(l),
-		IsNamedParam: c.IsNamedParam,
-		IsFuncCall:   c.IsFuncCall,
-		IsSqlcSlice:  c.IsSqlcSlice,
+		Name:            c.Name,
+		OriginalName:    c.OriginalName,
+		Comment:         c.Comment,
+		NotNull:         c.NotNull,
+		Unsigned:        c.Unsigned,
+		IsArray:         c.IsArray,
+		ArrayDims:       int32(c.ArrayDims),
+		Length:          int32(l),
+		IsNamedParam:    c.IsNamedParam,
+		IsFuncCall:      c.IsFuncCall,
+		IsSqlcSlice:     c.IsSqlcSlice,
+		IsPrimaryColumn: c.IsPrimaryColumn,
 	}
 
 	if c.Type != nil {

@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -115,8 +116,9 @@ func buildStructs(req *plugin.GenerateRequest, options *opts.Options) []Struct {
 type goColumn struct {
 	id int
 	*plugin.Column
-	embed *goEmbed
-	batch bool
+	embed      *goEmbed
+	batch      bool
+	primaryKey bool
 }
 
 type goEmbed struct {
@@ -196,6 +198,24 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 			continue
 		}
 
+		if query.Cmd == metadata.CmdUpdateBatch {
+			hasPrimaryKey := ""
+			for _, c := range query.Params {
+				if c.Column.IsPrimaryColumn {
+					hasPrimaryKey = c.Column.Name
+					break
+				}
+			}
+
+			if hasPrimaryKey == "" {
+				return nil, errors.New("updateBatch should have primary key")
+			} else if reg := regexp.MustCompile(`\s(?:and|AND|or|OR)\s`); reg.FindString(query.Text) != "" {
+				return nil, errors.New("updateBatch cannot use conditions")
+			} else if reg := regexp.MustCompile(hasPrimaryKey + ".+="); reg.FindString(query.Text) == "" {
+				return nil, errors.New("updateBatch condition only equal")
+			}
+		}
+
 		var constantName string
 		if options.EmitExportedQueries {
 			constantName = sdk.Title(query.Name)
@@ -241,7 +261,7 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 				Typ:       goType(req, options, p.Column),
 				SQLDriver: sqlpkg,
 				Column:    p.Column,
-				Batch:     strings.Contains(metadata.CmdInsertBatch, query.Cmd) || strings.Contains(metadata.CmdDeleteBatch, query.Cmd),
+				Batch:     strings.Contains(metadata.CmdInsertBatch, query.Cmd) || strings.Contains(metadata.CmdDeleteBatch, query.Cmd) || strings.Contains(metadata.CmdUpdateBatch, query.Cmd),
 			}
 		} else if len(query.Params) >= 1 {
 			var cols []goColumn
@@ -257,9 +277,10 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 			}
 			for id, p := range query.Params {
 				cols = append(cols, goColumn{
-					id:     int(p.Number),
-					Column: p.Column,
-					batch:  slices.Contains[[]int, int](idColumnBatch, id),
+					id:         int(p.Number),
+					Column:     p.Column,
+					batch:      slices.Contains[[]int, int](idColumnBatch, id),
+					primaryKey: p.Column.IsPrimaryColumn,
 				})
 			}
 			s, err := columnsToStruct(req, options, gq.MethodName+"Params", cols, false)
@@ -272,7 +293,7 @@ func buildQueries(req *plugin.GenerateRequest, options *opts.Options, structs []
 				Struct:      s,
 				SQLDriver:   sqlpkg,
 				EmitPointer: options.EmitParamsStructPointers,
-				Batch:       strings.Contains(metadata.CmdInsertBatch, query.Cmd) || strings.Contains(metadata.CmdDeleteBatch, query.Cmd),
+				Batch:       strings.Contains(metadata.CmdInsertBatch, query.Cmd) || strings.Contains(metadata.CmdDeleteBatch, query.Cmd) || strings.Contains(metadata.CmdUpdateBatch, query.Cmd),
 				Ptr:         strings.Contains(metadata.CmdDeleteBatch, query.Cmd),
 			}
 
@@ -421,6 +442,8 @@ func columnsToStruct(req *plugin.GenerateRequest, options *opts.Options, name st
 		if c.batch {
 			f.Type = "[]" + f.Type
 		}
+
+		f.PrimaryKey = c.IsPrimaryColumn
 
 		gs.Fields = append(gs.Fields, f)
 		if _, found := seen[baseFieldName]; !found {
