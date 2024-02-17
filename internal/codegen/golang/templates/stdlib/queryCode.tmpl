@@ -40,7 +40,11 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
     if err != nil{
         return err
     }
-    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, {{.Arg.Name}})
+    param, err := composeParams({{.Arg.Name}})
+    if err != nil{
+        return err
+    }
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param)
     return err
 }
 {{end}}
@@ -53,7 +57,11 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
     if err != nil{
         return err
     }
-    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, {{.Arg.Name}})
+    param, err := composeParams({{.Arg.Name}})
+    if err != nil{
+        return err
+    }
+    {{ queryRetval . }} {{ queryMethod . }}(ctx, qy, param)
     return err
 }
 {{end}}

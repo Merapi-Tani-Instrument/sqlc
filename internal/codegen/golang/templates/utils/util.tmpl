@@ -6,10 +6,7 @@ func appendQuery(q string, l int) (string, error){
     if l <= 1 {
 		return q, nil
 	}
-	regex, err := regexp.Compile(`\(([\s\?\,]*?)\)`)
-	if err != nil {
-		return "", err
-	}
+	regex := regexp.MustCompile(`\(.*\)`)
 	res := regex.FindAllString(q, 1)[0]
 	var join []string
 	for i := 1; i < l; i++ {
@@ -46,6 +43,35 @@ func batchDelete(q string, d any) (string, error) {
 
 func createGroupSql(l int) string {
 	return "(" + strings.Join(strings.Split(strings.Repeat("?", l), ""), ",") + ")"
+}
+
+func composeParams(s any) ([]any, error) {
+	v := reflect.ValueOf(s)
+	if (v.Kind() == reflect.Array || v.Kind() == reflect.Slice) && v.Len() > 0 {
+		var r []any
+		if t := v.Index(0).Kind(); t == reflect.Struct || t == reflect.Ptr {
+			for h := 0; h < v.Len(); h++ {
+				var el reflect.Value
+				if t == reflect.Struct {
+					el = v.Index(h).Addr().Elem()
+				} else {
+					el = v.Index(h).Elem()
+				}
+				for i := 0; i < el.NumField(); i++ {
+					r = append(r, el.Field(i).Interface())
+				}
+			}
+			return r, nil
+		} else {
+			r := make([]any, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				r[i] = v.Index(i).Interface()
+			}
+			return r, nil
+		}
+	}
+
+	return nil, InvalidType
 }
 
 {{end}}
