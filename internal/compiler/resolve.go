@@ -102,12 +102,19 @@ func (comp *Compiler) resolveCatalogRefs(qc *QueryCatalog, rvs []*ast.RangeVar, 
 	addUnknownParam := func(ref paramRef) {
 		defaultP := named.NewInferredParam(ref.name, false)
 		p, isNamed := params.FetchMerge(ref.ref.Number, defaultP)
+		dType := "any"
+		notNull := false
+		if p.IsSqlcSort() {
+			dType = "varchar"
+			notNull = true
+		}
 		a = append(a, Parameter{
 			Number: ref.ref.Number,
 			Column: &Column{
 				Name:         p.Name(),
-				DataType:     "any",
+				DataType:     dType,
 				IsNamedParam: isNamed,
+				NotNull:      notNull,
 			},
 		})
 	}
