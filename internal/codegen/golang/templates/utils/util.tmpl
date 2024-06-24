@@ -7,7 +7,7 @@ func appendQuery(q string, l int) (string, error){
 		return q, nil
 	}
 	regex := regexp.MustCompile(`\(.*\)`)
-	res := regex.FindAllString(q, 1)[0]
+	res := regex.FindAllString(q, 2)[1]
 	var join []string
 	for i := 1; i < l; i++ {
 		join = append(join, res)
